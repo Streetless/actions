@@ -1,0 +1,94 @@
+name: Release Please Action
+
+on:
+  push:
+    branches: [ dev ]
+  workflow_dispatch:
+
+env:
+  RELEASE_VERSION: ${{ github.event.inputs.version }}
+
+jobs:
+  release-please:
+    name: Release Please
+    permissions:
+      contents: write # to create release commit (google-github-actions/release-please-action)
+      pull-requests: write # to create release PR (google-github-actions/release-please-action)
+    runs-on: [ self-hosted, Linux, X64 ]
+    outputs:
+      releases_created: ${{ steps.release-please.outputs.releases_created }}
+      paths_released: ${{ steps.release-please.outputs.paths_released }}
+      prs_created: ${{ steps.release-please.outputs.prs_created }}
+      pr: ${{ steps.release-please.outputs.pr }}
+      prs: ${{ steps.release-please.outputs.prs }}
+      # only with root component "."
+      release_created: ${{ steps.release-please.outputs.release_created }}
+      upload_url: ${{ steps.release-please.outputs.upload_url }}
+      html_url: ${{ steps.release-please.outputs.html_url }}
+      tag_name: ${{ steps.release-please.outputs.tag_name }}
+      version: ${{ steps.release-please.outputs.version }}
+      major: ${{ steps.release-please.outputs.major }}
+      minor: ${{ steps.release-please.outputs.minor }}
+      patch: ${{ steps.release-please.outputs.patch }}
+      sha: ${{ steps.release-please.outputs.sha }}
+    steps:
+      - name: Generate token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # ratchet:tibdex/github-app-token@v2
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Release Please
+        uses: googleapis/release-please-action@7987652d64b4581673a76e33ad5e98e3dd56832f # v4
+        id: release-please
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          target-branch: dev
+
+  gitflow-release:
+    name: Gitflow release
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: [ self-hosted, Linux, X64 ]
+    permissions:
+      contents: write
+    steps:
+      - name: Generate token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # ratchet:tibdex/github-app-token@v2
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Gitflow release
+        env:
+          release_version: ${{ env.RELEASE_VERSION || needs.release-please.outputs.tag_name }}
+          version: ${{ env.RELEASE_VERSION || needs.release-please.outputs.version }}
+        run: |
+          git config --global user.name "alwyn974"
+          git config --global user.email "47529956+alwyn974@users.noreply.github.com"
+
+          git checkout -b release/${{ env.version }} dev
+
+          git checkout main
+          git merge --no-ff release/${{ env.version }}
+
+          # git tag --delete ${{ env.release_version }} # remove release please tag
+          # git tag -a ${{ env.release_version }} -m "Tagging version ${{ env.release_version }}" # create new tag on branch main
+
+          git checkout dev
+          git merge --no-ff ${{ env.release_version }}
+          git branch -d release/${{ env.version }}
+
+          git merge --no-ff main # merge main into dev
+
+          git push --all && git push --tags
