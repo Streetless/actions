@@ -28,7 +28,7 @@ on:
 
 jobs:
   release-please:
-    name: Release Please
+    name: Run Release Please
     permissions:
       contents: write # to create release commit (google-github-actions/release-please-action)
       pull-requests: write # to create release PR (google-github-actions/release-please-action)
