@@ -4,10 +4,10 @@ on:
   workflow_call:
     inputs:
       runs-on:
-        description: "Optional labels for the runner to run on"
+        description: "Optional label for the runner to run on"
         required: false
         type: string
-        default: "[ self-hosted, Linux, X64 ]"
+        default: "self-hosted"
       committer-email:
         description: "Optional committer email"
         required: false
