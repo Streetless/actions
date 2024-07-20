@@ -1,12 +1,30 @@
 name: Release Please Action
 
 on:
-  push:
-    branches: [ dev ]
-  workflow_dispatch:
-
-env:
-  RELEASE_VERSION: ${{ github.event.inputs.version }}
+  workflow_call:
+    inputs:
+      runs-on:
+        description: "Optional labels for the runner to run on"
+        required: false
+        type: string
+        default: "[ self-hosted, Linux, X64 ]"
+      committer-email:
+        description: "Optional committer email"
+        required: false
+        type: string
+        default: "47529956+alwyn974@users.noreply.github.com"
+      committer-name:
+        description: "Optional committer name"
+        required: false
+        type: string
+        default: "alwyn974"
+    secrets:
+      APP_ID:
+        description: "GitHub App ID"
+        required: true
+      APP_PRIVATE_KEY:
+        description: "GitHub App Private Key"
+        required: true
 
 jobs:
   release-please:
@@ -14,7 +32,7 @@ jobs:
     permissions:
       contents: write # to create release commit (google-github-actions/release-please-action)
       pull-requests: write # to create release PR (google-github-actions/release-please-action)
-    runs-on: [ self-hosted, Linux, X64 ]
+    runs-on: ${{ inputs.runs-on }}
     outputs:
       releases_created: ${{ steps.release-please.outputs.releases_created }}
       paths_released: ${{ steps.release-please.outputs.paths_released }}
@@ -71,11 +89,11 @@ jobs:
 
       - name: Gitflow release
         env:
-          release_version: ${{ env.RELEASE_VERSION || needs.release-please.outputs.tag_name }}
-          version: ${{ env.RELEASE_VERSION || needs.release-please.outputs.version }}
+          release_version: ${{ needs.release-please.outputs.tag_name }}
+          version: ${{ needs.release-please.outputs.version }}
         run: |
-          git config --global user.name "alwyn974"
-          git config --global user.email "47529956+alwyn974@users.noreply.github.com"
+          git config --global user.name ${{ inputs.committer-name }}
+          git config --global user.email ${{ inputs.committer-email }}
 
           git checkout -b release/${{ env.version }} dev
 
