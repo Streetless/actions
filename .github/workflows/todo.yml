@@ -19,7 +19,7 @@ on:
 
 jobs:
   todo-issues:
-    name: Todo Issues
+    name: Run Todo Issues
     runs-on: ${{ inputs.runs-on }}
     permissions:
       issues: write
