@@ -3,6 +3,21 @@ name: Release Please Action
 on:
   workflow_call:
     inputs:
+      target-branch:
+        description: "Optional branch to target for release"
+        required: false
+        type: string
+        default: "dev"
+      config-file:
+        description: "Optional path to the release-please configuration file"
+        required: false
+        type: string
+        default: "release-please-config.json"
+      manifest-file:
+        description: "Optional path to the release-please manifest file"
+        required: false
+        type: string
+        default: ".release-please-manifest.json"
       runs-on:
         description: "Optional label for the runner to run on"
         required: false
@@ -62,9 +77,9 @@ jobs:
         id: release-please
         with:
           token: ${{ steps.generate-token.outputs.token }}
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
-          target-branch: dev
+          config-file: ${{ inputs.config-file }}
+          manifest-file: ${{ inputs.manifest-file }}
+          target-branch: ${{ inputs.target-branch }}
 
   gitflow-release:
     name: Gitflow release
