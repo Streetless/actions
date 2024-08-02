@@ -132,7 +132,7 @@ jobs:
   gitflow-release:
     name: Gitflow release
     needs: release-please
-    if: needs.release-please.outputs.release_created == 'true' && ${{ inputs.use-gitflow }}
+    if: ${{ needs.release-please.outputs.release_created == 'true' && inputs.use-gitflow == 'true' }}
     runs-on: [ self-hosted, Linux, X64 ]
     permissions:
       contents: write
