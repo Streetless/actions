@@ -46,6 +46,9 @@ on:
         description: "GitHub App Private Key"
         required: true
     outputs:
+      outputs:
+        description: "All outputs from the release-please action"
+        value: ${{ jobs.release-please.outputs.outputs }}
       # https://github.com/googleapis/release-please-action?tab=readme-ov-file#outputs
       releases_created:
         description: "Boolean indicating if releases were created"
@@ -75,6 +78,9 @@ on:
       tag_name:
         description: "Directly related to Create a release API https://developer.github.com/v3/repos/releases/#response-4"
         value: ${{ jobs.release-please.outputs.tag_name }}
+      version:
+        description: "Version number (major.minor.patch) of the release created"
+        value: ${{ jobs.release-please.outputs.version }}
       major:
         description: "Major version number"
         value: ${{ jobs.release-please.outputs.major }}
@@ -96,6 +102,7 @@ jobs:
       pull-requests: write # to create release PR (google-github-actions/release-please-action)
     runs-on: [ self-hosted, Linux, X64 ]
     outputs:
+      outputs: ${{ steps.release-please.outputs }}
       releases_created: ${{ steps.release-please.outputs.releases_created }}
       paths_released: ${{ steps.release-please.outputs.paths_released }}
       prs_created: ${{ steps.release-please.outputs.prs_created }}
@@ -106,7 +113,7 @@ jobs:
       upload_url: ${{ steps.release-please.outputs.upload_url }}
       html_url: ${{ steps.release-please.outputs.html_url }}
       tag_name: ${{ steps.release-please.outputs.tag_name }}
-      # Doesn't exist in docs ?
+      # Doesn't exist in docs ? But works
       version: ${{ steps.release-please.outputs.version }}
       major: ${{ steps.release-please.outputs.major }}
       minor: ${{ steps.release-please.outputs.minor }}
