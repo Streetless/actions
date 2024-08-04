@@ -22,7 +22,7 @@ on:
         description: "Optional label for the runner to run on"
         required: false
         type: string
-        default: "self-hosted"
+        default: "[self-hosted, Linux, X64]"
       use-gitflow:
         description: "Optional flag to enable gitflow release"
         required: false
@@ -47,7 +47,7 @@ on:
         required: true
     outputs:
       outputs:
-        description: "All outputs from the release-please action"
+        description: "All outputs from the release-please action as JSON"
         value: ${{ jobs.release-please.outputs.outputs }}
       # https://github.com/googleapis/release-please-action?tab=readme-ov-file#outputs
       releases_created:
@@ -100,9 +100,9 @@ jobs:
     permissions:
       contents: write # to create release commit (google-github-actions/release-please-action)
       pull-requests: write # to create release PR (google-github-actions/release-please-action)
-    runs-on: [ self-hosted, Linux, X64 ]
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     outputs:
-      outputs: ${{ steps.release-please.outputs }}
+      outputs: ${{ toJson(steps.release-please.outputs) }}
       releases_created: ${{ steps.release-please.outputs.releases_created }}
       paths_released: ${{ steps.release-please.outputs.paths_released }}
       prs_created: ${{ steps.release-please.outputs.prs_created }}
@@ -140,7 +140,7 @@ jobs:
     name: Gitflow release
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created == 'true' && inputs.use-gitflow == 'true' }}
-    runs-on: [ self-hosted, Linux, X64 ]
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
       contents: write
     steps:
