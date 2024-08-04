@@ -22,7 +22,7 @@ on:
         description: "Optional label for the runner to run on"
         required: false
         type: string
-        default: "[self-hosted, Linux, X64]"
+        default: "['self-hosted', 'Linux', 'X64']"
       use-gitflow:
         description: "Optional flag to enable gitflow release"
         required: false
