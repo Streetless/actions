@@ -8,6 +8,11 @@ on:
         required: false
         type: string
         default: "dev"
+      default-branch:
+        description: "Optional default branch to target for release"
+        required: false
+        type: string
+        default: "main"
       config-file:
         description: "Optional path to the release-please configuration file"
         required: false
@@ -161,22 +166,26 @@ jobs:
         env:
           release_version: ${{ needs.release-please.outputs.tag_name }}
           version: ${{ needs.release-please.outputs.version }}
+          NEXT_BRANCH: ${{ inputs.target-branch }}
+          DEFAULT_BRANCH: ${{ inputs.default-branch }}
         run: |
           git config --global user.name ${{ inputs.committer-name }}
           git config --global user.email ${{ inputs.committer-email }}
 
-          git checkout -b release/${{ env.version }} dev
+          # Create new release branch (e.g release/docs-v1.0.0, release/v1.0.0) from NEXT_BRANCH (e.g dev)
+          git checkout -b release/${{ env.release_version }} ${{ env.NEXT_BRANCH }}
 
-          git checkout main
-          git merge --no-ff release/${{ env.version }}
+          # Merge release branch into the default branch (e.g main)
+          git checkout ${{ env.DEFAULT_BRANCH }}
+          git merge --no-ff release/${{ env.release_version }}
 
           # git tag --delete ${{ env.release_version }} # remove release please tag
-          # git tag -a ${{ env.release_version }} -m "Tagging version ${{ env.release_version }}" # create new tag on branch main
+          # git tag -a ${{ env.release_version }} -m "Tagging version ${{ env.release_version }}" # create new tag on default branch
 
-          git checkout dev
+          git checkout ${{ env.NEXT_BRANCH }}
           git merge --no-ff ${{ env.release_version }}
-          git branch -d release/${{ env.version }}
+          git branch -d release/${{ env.release_version }}
 
-          git merge --no-ff main # merge main into dev
+          git merge --no-ff ${{ env.DEFAULT_BRANCH }} # merge main into dev
 
           git push --all && git push --tags
