@@ -38,10 +38,6 @@ on:
         required: false
         type: string
         default: "alwyn974"
-    secrets:
-      GITHUB_TOKEN:
-        description: "GitHub Token"
-        required: true
 
 jobs:
   build:
