@@ -203,11 +203,13 @@ jobs:
   docs-gitflow-release:
     name: Gitflow release - Docs
     needs: release-please
-    if: ${{ needs.release-please.outputs['docs--release_created'] == 'true' && inputs.use-docs-gitflow == 'true'}}
+    if: ${{ fromJSON(needs.release-please.outputs.outputs)['docs--release_created'] == 'true' && inputs.use-docs-gitflow == 'true'}}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
       contents: write
     env:
+      # For writing shorter lines
+      outputs: ${{ needs.release-please.outputs.outputs }}
       node-version: ${{ inputs.node-version }}
     steps:
       - name: Generate token
@@ -241,8 +243,8 @@ jobs:
 
       - name: Release - Docs component
         env:
-          release_version: ${{ needs.release-please.outputs['docs--tag_name'] }}
-          version: ${{ needs.release-please.outputs['docs--version'] }}
+          release_version: ${{ fromJSON(env.outputs)['docs--tag_name'] }}
+          version: ${{ fromJSON(env.outputs)['docs--version'] }}
           NEXT_BRANCH: ${{ inputs.target-branch }}
           DEFAULT_BRANCH: ${{ inputs.default-branch }}
         run: |
