@@ -28,8 +28,13 @@ on:
         required: false
         type: string
         default: "['self-hosted', 'Linux', 'X64']"
-      use-gitflow:
-        description: "Optional flag to enable gitflow release"
+      use-root-gitflow:
+        description: "Optional flag to enable gitflow release for root component"
+        required: false
+        type: boolean
+        default: true
+      use-docs-gitflow:
+        description: "Optional flag to enable gitflow release for docs component"
         required: false
         type: boolean
         default: true
@@ -43,6 +48,11 @@ on:
         required: false
         type: string
         default: "alwyn974"
+      node-version:
+        description: "Optional node version for docs component"
+        required: false
+        type: string
+        default: "20.x"
     secrets:
       APP_ID:
         description: "GitHub App ID"
@@ -141,10 +151,10 @@ jobs:
           manifest-file: ${{ inputs.manifest-file }}
           target-branch: ${{ inputs.target-branch }}
 
-  gitflow-release:
-    name: Gitflow release
+  root-gitflow-release:
+    name: Gitflow release - Root
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created == 'true' && inputs.use-gitflow == 'true' }}
+    if: ${{ needs.release-please.outputs.release_created == 'true' && inputs.use-root-gitflow == 'true' }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
       contents: write
@@ -162,7 +172,7 @@ jobs:
           fetch-depth: 0
           token: ${{ steps.generate-token.outputs.token }}
 
-      - name: Gitflow release
+      - name: Release root component
         env:
           release_version: ${{ needs.release-please.outputs.tag_name }}
           version: ${{ needs.release-please.outputs.version }}
@@ -184,6 +194,71 @@ jobs:
 
           git checkout ${{ env.NEXT_BRANCH }}
           git merge --no-ff ${{ env.release_version }}
+          git branch -d release/${{ env.release_version }}
+
+          git merge --no-ff ${{ env.DEFAULT_BRANCH }} # merge main into dev
+
+          git push --all && git push --tags
+
+  docs-gitflow-release:
+    name: Gitflow release - Docs
+    needs: release-please
+    if: ${{ needs.release-please.outputs['docs--release_created'] == 'true' && inputs.use-docs-gitflow == 'true'}}
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    permissions:
+      contents: write
+    env:
+      node-version: ${{ inputs.node-version }}
+    steps:
+      - name: Generate token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # ratchet:tibdex/github-app-token@v2
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js ${{ env.node-version }}
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4
+        with:
+          node-version: ${{ env.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        working-directory: docs
+        run: |
+          pnpm install
+
+      - name: Release - Docs component
+        env:
+          release_version: ${{ needs.release-please.outputs['docs--tag_name'] }}
+          version: ${{ needs.release-please.outputs['docs--version'] }}
+          NEXT_BRANCH: ${{ inputs.target-branch }}
+          DEFAULT_BRANCH: ${{ inputs.default-branch }}
+        run: |
+          git config --global user.name ${{ inputs.committer-name }}
+          git config --global user.email ${{ inputs.committer-email }}
+
+          git checkout -b release/${{ env.release_version }} ${{ env.NEXT_BRANCH }}
+          cd docs && pnpm docusaurus docs:version v${{ env.version }} && cd ..
+          git add docs
+          git commit -m "docs(release): 🚀 Release docs version ${{ env.release_version }}"
+
+          git checkout ${{ env.DEFAULT_BRANCH }}
+          git merge --no-ff release/${{ env.release_version }}
+
+          git checkout ${{ env.NEXT_BRANCH }}
+          # git merge --no-ff ${{ env.release_version }}
           git branch -d release/${{ env.release_version }}
 
           git merge --no-ff ${{ env.DEFAULT_BRANCH }} # merge main into dev
