@@ -203,7 +203,7 @@ jobs:
   docs-gitflow-release:
     name: Gitflow release - Docs
     needs: release-please
-    if: ${{ fromJSON(needs.release-please.outputs.outputs)['docs--release_created'] == 'true' && inputs.use-docs-gitflow == 'true'}}
+    if: ${{ fromJSON(needs.release-please.outputs.outputs)['docs--release_created'] == 'true' && inputs.use-docs-gitflow == 'true' }}
     runs-on: ${{ fromJSON(inputs.runs-on) }}
     permissions:
       contents: write
