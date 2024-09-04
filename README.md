@@ -54,11 +54,11 @@ This action is used to automatically build and deploy the documentation when a c
 docs:
   uses: Streetless/actions/.github/workflows/docs.yml@main
   with:
-    deploy:
-      default-branch: "main" # Optional
-      runs-on: "['self-hosted']" # Optional
-      node-version: "21.x" # Optional
-      working-directory: "docs" # Optional
-      committer-email: "47529956+alwyn974@users.noreply.github.com" # Optional
-      committer-name: "alwyn974" # Optional
+    deploy: true # Optional
+    default-branch: "main" # Optional
+    runs-on: "['self-hosted']" # Optional
+    node-version: "21.x" # Optional
+    working-directory: "docs" # Optional
+    committer-email: "47529956+alwyn974@users.noreply.github.com" # Optional
+    committer-name: "alwyn974" # Optional
 ```
