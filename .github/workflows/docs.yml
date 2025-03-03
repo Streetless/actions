@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       deploy:
-        description: "Optional flag to deploy documentation"
+        description: "Optional flag to deploy documentation using deploy script"
         required: false
         type: boolean
         default: true
